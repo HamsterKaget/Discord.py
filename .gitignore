@@ -1,7 +1,6 @@
 venv/
+.idea/
 
 *.env
-
-*.idea
 
 wa.py
