@@ -1,6 +1,8 @@
 import discord
-from discord.ext import commands
 import os
+from discord import Member
+from discord.ext import commands
+from discord.ext.commands import has_permissions, MissingPermissions
 from discord.ext.commands import guild_only
 from dotenv import load_dotenv
 import requests
@@ -11,7 +13,7 @@ import youtube_dl
 # ================================================================================ #
 
 client = discord.Client()
-client = commands.Bot(command_prefix='?')
+client = commands.Bot(command_prefix=('!' or '?'))
 load_dotenv()
 
 # ================================================================================ #
@@ -50,13 +52,22 @@ async def quote(ctx):
     await ctx.channel.send(isi)
 
 # Command Kick Member
-@client.command()
+@client.command(name='kick', pass_context=True)
+@guild_only()
+@has_permissions(ban_members=True)
 async def kick(ctx, member: discord.Member, *, reason=None):
     await member.kick(reason=reason)
     await ctx.send(f'**{member} telah di tendang keluar server !**')
 
+@kick.error
+async def kick_error(error, ctx):
+    if isinstance(error, MissingPermissions):
+        await ctx.reply("Sorry {0}, kamu tidak memiliki permission yang diperlukan!".format(ctx.message.author))
+
 # Command untuk ban member
-@client.command()
+@client.command(name='ban')
+@guild_only()
+@has_permissions(ban_members=True)
 async def ban(ctx, member: discord.Member, *, reason=None):
     await member.ban(reason=reason)
     await ctx.send(f'**{member} telah di ban dari server ini !**')
@@ -64,6 +75,7 @@ async def ban(ctx, member: discord.Member, *, reason=None):
 # Command untuk unban member
 @client.command(name='unban')
 @guild_only()
+@has_permissions(ban_members=True)
 async def unban(ctx, id: int):
     user = await client.fetch_user(id)
     await ctx.guild.unban(user)
@@ -72,8 +84,9 @@ async def unban(ctx, id: int):
 
 # Command Server Invite
 @client.command()
+@guild_only()
 async def serverinvite(ctx):
-    link = await ctx.channel.create_invite(max_age = 300)
+    link = await ctx.channel.create_invite(max_age = 0, max_uses = 0, xkcd = 0)
     await ctx.send('Server Link : {0}'.format(link))
 
 
